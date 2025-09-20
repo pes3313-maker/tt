@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>조형전 테스트 — Kawaii Retro Desktop</title>
+  <style>
+    :root{
+      /* pastel XP-ish palette */
+      --sky:#cfe6ff; --sky2:#f6f0ff; --hill1:#7fd17b; --hill2:#67b96b; --hill3:#8de58a;
+      --taskbar:#295bbd; --taskbar-dark:#1d3f86; --task-btn:#3aa855; --window:#f6f8ff; --chrome:#6374d6; --chrome-dark:#485ac4;
+      --accent:#ff86d8; --accent2:#6fe6ff; --accent3:#ffe37a; --ink:#222; --muted:#556;
+      --shadow: 0 12px 30px rgba(0,0,0,.20);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family: "Pretendard", system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;color:var(--ink)}
+    body{overflow:hidden}
+
+    /* ===== BACKGROUND ===== */
+    .scene{position:fixed; inset:0; z-index:0; background: linear-gradient(180deg, var(--sky), var(--sky2) 65%)}
+    .rainbow{position:absolute; left:50%; transform:translateX(-50%); top:6vh; width:120vmin; height:120vmin; border-radius:50%;
+      background:
+        radial-gradient(closest-side, transparent 73%, #0000 0),
+        conic-gradient(from 90deg,
+          #ff8ab7 0 16%, #ffd07a 16% 32%, #a9f277 32% 48%, #7df2e9 48% 64%, #7fb3ff 64% 80%, #c9a1ff 80% 100%);
+      -webkit-mask: radial-gradient(closest-side, #0000 68%, #000 70%);
+              mask: radial-gradient(closest-side, #0000 68%, #000 70%);
+      opacity:.85; filter:saturate(110%);
+    }
+    .cloud{position:absolute; background:linear-gradient(180deg,#fff,#f1f4ff); border-radius:999px; filter:drop-shadow(0 8px 20px rgba(0,0,0,.1));}
+    .cloud:before,.cloud:after{content:""; position:absolute; background:inherit; border-radius:inherit}
+    .cloud.small{width:120px;height:60px}
+    .cloud.small:before{width:70px;height:70px; left:-20px; top:-18px}
+    .cloud.small:after{width:80px;height:80px; right:-22px; top:-26px}
+    .cloud.big{width:220px;height:110px}
+    .cloud.big:before{width:120px;height:120px; left:-30px; top:-28px}
+    .cloud.big:after{width:140px;height:140px; right:-32px; top:-38px}
+
+    .hills{position:absolute; inset:45vh 0 40px 0;}
+    .hill{position:absolute; bottom:0; width:80vmax; height:30vmax; border-radius:50%; filter:drop-shadow(0 -8px 40px rgba(0,0,0,.12))}
+    .hill.one{left:-20vmax; background:radial-gradient(120% 120% at 60% 30%, #9bf58f, var(--hill1))}
+    .hill.two{right:-25vmax; background:radial-gradient(120% 120% at 40% 35%, #9df7a2, var(--hill2))}
+    .hill.three{left:10vmax; width:60vmax; height:22vmax; background:radial-gradient(120% 120% at 50% 30%, #b7ffb4, var(--hill3))}
+
+    /* ===== DESKTOP ICONS ===== */
+    .desktop{position:fixed; inset:0; padding:14px; z-index:2; display:grid; grid-template-columns:repeat(auto-fill, 92px); gap:16px; align-content:start}
+    .icon{width:92px; text-align:center; user-select:none; cursor:pointer}
+    .icon .glyph{width:64px;height:64px; margin:0 auto 6px; border-radius:16px; background:linear-gradient(145deg,#fff,#eef2ff); border:1px solid #dfe4ff; display:grid; place-items:center; box-shadow:0 6px 18px rgba(0,0,0,.10)}
+    .icon .glyph svg{width:38px;height:38px}
+    .icon span{display:block; font-size:12px; color:#123; text-shadow:0 1px 0 #fff}
+
+    /* ===== WINDOWS ===== */
+    .window{position:absolute; min-width:300px; width:min(560px, 92vw); max-width:96vw; background:var(--window); border:1px solid #cad3ff; border-radius:10px; overflow:hidden; box-shadow:var(--shadow); z-index:5}
+    .titlebar{display:flex; align-items:center; gap:8px; padding:8px 10px; color:#fff; background:linear-gradient(180deg, var(--chrome), var(--chrome-dark)); cursor:move}
+    .titlebar .btn{margin-left:auto; display:flex; gap:6px}
+    .tb{width:26px;height:22px; border-radius:4px; background:rgba(255,255,255,.15); display:grid; place-items:center; border:1px solid rgba(255,255,255,.25); font-weight:900}
+    .tb:hover{background:rgba(255,255,255,.25)}
+    .menubar{display:flex; gap:14px; padding:6px 10px; font-size:13px; color:#2a2a4a; border-bottom:1px solid #e3e7ff; background:#f7f9ff}
+    .content{padding:12px; font-size:14px; color:#334}
+    .paint{display:grid; grid-template-columns:56px 1fr; gap:10px}
+    .tools{display:grid; grid-template-columns:repeat(2,26px); gap:6px; background:#eef2ff; border:1px solid #dfe4ff; border-radius:6px; padding:8px}
+    .tool{width:26px;height:26px; border-radius:6px; background:#fff; border:1px solid #d2d8ff; display:grid; place-items:center}
+    .canvas{background:linear-gradient(180deg,#dff6ff,#f9feff); border:1px solid #cfe8ff; border-radius:8px; box-shadow:inset 0 0 0 2px #fff; min-height:220px}
+
+    /* ===== MEDIA PLAYER MOCK ===== */
+    .player{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px; border:1px solid #dfe4ff; border-radius:12px; background:linear-gradient(180deg,#fefeff,#eef4ff)}
+    .dial{width:56px;height:56px; border-radius:50%; background:conic-gradient(var(--accent), var(--accent2), var(--accent3), var(--accent)); display:grid; place-items:center; filter:saturate(120%)}
+    .dial div{width:40px;height:40px; border-radius:50%; background:#fff}
+
+    /* ===== TASKBAR ===== */
+    .taskbar{position:fixed; left:0; right:0; bottom:0; height:40px; background:linear-gradient(180deg,var(--taskbar), var(--taskbar-dark)); z-index:6; display:flex; align-items:center; gap:8px; padding:0 10px}
+    .start{background:linear-gradient(180deg,#4cc66e,#2d9f53); color:#fff; border:1px solid #1f7c3f; padding:6px 10px; border-radius:6px; font-weight:800}
+    .task{background:#f1f5ff; color:#123; border:1px solid #cfd7ff; height:28px; padding:0 10px; border-radius:6px; display:flex; align-items:center}
+
+    /* ===== Responsive helpers ===== */
+    @media (max-width: 680px){ .menubar{display:none} .paint{grid-template-columns:1fr} .tools{grid-template-columns:repeat(6,26px)} }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="rainbow"></div>
+    <div class="cloud small" style="top:10vh; left:6vw"></div>
+    <div class="cloud big" style="top:16vh; left:26vw"></div>
+    <div class="cloud small" style="top:12vh; right:8vw"></div>
+    <div class="cloud big" style="top:24vh; right:20vw"></div>
+    <div class="hills">
+      <div class="hill one"></div>
+      <div class="hill two"></div>
+      <div class="hill three"></div>
+    </div>
+  </div>
+
+  <!-- Desktop icons -->
+  <div class="desktop" aria-label="icons">
+    <div class="icon" data-open="#w-paint">
+      <div class="glyph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7c91ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 13l4-4 5 5 3-3 6 6"/></svg>
+      </div>
+      <span>Paint</span>
+    </div>
+    <div class="icon" data-open="#w-gallery">
+      <div class="glyph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff86d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8.5" cy="8.5" r="3.5"/><path d="M21 21l-6-6"/></svg>
+      </div>
+      <span>Gallery</span>
+    </div>
+    <div class="icon" data-open="#w-player">
+      <div class="glyph">
+        <svg viewBox="0 0 24 24" fill="#7fe0ff"><path d="M8 5v14l11-7-11-7z"/></svg>
+      </div>
+      <span>Player</span>
+    </div>
+  </div>
+
+  <!-- WINDOWS (spawned dynamically) -->
+  <template id="tpl-win">
+    <div class="window" style="left:8vw; top:22vh">
+      <div class="titlebar" data-drag>
+        <strong>untitled - Paint</strong>
+        <div class="btn"><div class="tb" data-min>-</div><div class="tb" data-close>×</div></div>
+      </div>
+      <div class="menubar">File Edit View Image Colors Help</div>
+      <div class="content paint">
+        <div class="tools">
+          <div class="tool">✏️</div><div class="tool">🖌️</div><div class="tool">🔲</div><div class="tool">🔴</div><div class="tool">🌈</div><div class="tool">✂️</div>
+        </div>
+        <div class="canvas" style="min-height:200px"></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- TASKBAR -->
+  <div class="taskbar">
+    <button class="start">start</button>
+    <div class="task">untitled - Paint</div>
+  </div>
+  <div class="taskbar">
+    <button class="start">start</button>
+    <div class="task">untitled - Paint</div>
+    <div class="task">Viewer</div>
+    <div class="task">Player</div>
+  </div>
+
+  <script>
+    // Drag + window behavior helpers
+    function makeDraggable(w){
+      const bar = w.querySelector('[data-drag]');
+      let sx=0, sy=0, sl=0, st=0, drag=false;
+      const boundsY = 40; // reserve for taskbar
+      bar.addEventListener('pointerdown', e=>{drag=true; w.setPointerCapture(e.pointerId); sx=e.clientX; sy=e.clientY; sl=parseInt(w.style.left)||0; st=parseInt(w.style.top)||0; w.style.zIndex = +new Date();});
+      window.addEventListener('pointermove', e=>{ if(!drag) return; const dx=e.clientX-sx, dy=e.clientY-sy; const nx=Math.max(0, Math.min(window.innerWidth-w.offsetWidth, sl+dx)); const ny=Math.max(0, Math.min(window.innerHeight-boundsY-w.offsetHeight, st+dy)); w.style.left=nx+"px"; w.style.top=ny+"px"; });
+      window.addEventListener('pointerup', e=>{drag=false; try{w.releasePointerCapture(e.pointerId)}catch(_){} });
+      w.querySelector('[data-close]').addEventListener('click', ()=>w.remove());
+      w.querySelector('[data-min]').addEventListener('click', ()=>w.style.display='none');
+    }
+
+    function spawn(n=1){
+      const tpl = document.getElementById('tpl-win');
+      const frag = document.createDocumentFragment();
+      for(let i=0;i<n;i++){
+        const w = tpl.content.firstElementChild.cloneNode(true);
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const ww = Math.min(560, Math.max(320, 280 + Math.random()*220));
+        const wh = 240 + Math.random()*120;
+        w.style.width = ww + 'px';
+        w.querySelector('.canvas').style.minHeight = (wh-100) + 'px';
+        const x = Math.max(6, Math.floor(Math.random()*(vw-ww-12)));
+        const y = Math.max(6, Math.floor(Math.random()*(vh-wh-60)) + 60);
+        w.style.left = x + 'px';
+        w.style.top = y + 'px';
+        // fun random titles
+        const titles = ['Paint','Viewer','Media Player','Memo','Smile!','Cool Fish'];
+        w.querySelector('strong').textContent = (Math.random()<.5? 'untitled - ':'') + titles[Math.floor(Math.random()*titles.length)];
+        makeDraggable(w);
+        frag.appendChild(w);
+      }
+      document.body.appendChild(frag);
+    }
+
+    // Desktop icons open windows
+    document.querySelectorAll('.icon').forEach(i=>{
+      i.addEventListener('dblclick', ()=> spawn(1));
+    });
+
+    // Background grid (existing)
+    const grid = document.querySelector('.grid');
+    const total = 30; // decorative blobs
+    for(let i=0;i<total;i++){
+      const b = document.createElement('div');
+      b.className = 'blob';
+      const r = (Math.random()*10-5).toFixed(2);
+      const s = (0.92 + Math.random()*0.2).toFixed(2);
+      b.style.transform = `rotate(${r}deg) scale(${s})`;
+      grid.appendChild(b);
+    }
+
+    // Spawn 30 windows initially
+    spawn(30);
+  </script>
+</body>
+</html>
+
+
