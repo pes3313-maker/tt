@@ -3,31 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>조형전 테스트 — Kawaii Retro Desktop</title>
+  <title>퍼즐 윈도우 — Drag & Snap</title>
   <style>
     :root{
-      /* pastel XP-ish palette */
-      --sky:#cfe6ff; --sky2:#f6f0ff; --hill1:#7fd17b; --hill2:#67b96b; --hill3:#8de58a;
-      --taskbar:#295bbd; --taskbar-dark:#1d3f86; --task-btn:#3aa855; --window:#f6f8ff; --chrome:#6374d6; --chrome-dark:#485ac4;
-      --accent:#ff86d8; --accent2:#6fe6ff; --accent3:#ffe37a; --ink:#222; --muted:#556;
+      --sky:#cfe6ff; --sky2:#f6f0ff; --ink:#222; --muted:#556;
+      --chrome:#6374d6; --chrome-dark:#485ac4; --window:#f6f8ff;
+      --ok:#35c26b; --warn:#ffb74d; --bad:#ff6b6b;
       --shadow: 0 12px 30px rgba(0,0,0,.20);
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family: "Pretendard", system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;color:var(--ink)}
-    body{overflow:hidden}
+    body{overflow:hidden; background:linear-gradient(180deg,var(--sky),var(--sky2) 65%)}
 
-    /* ===== BACKGROUND ===== */
-    .scene{position:fixed; inset:0; z-index:0; background: linear-gradient(180deg, var(--sky), var(--sky2) 65%)}
-    .rainbow{position:absolute; left:50%; transform:translateX(-50%); top:6vh; width:120vmin; height:120vmin; border-radius:50%;
-      background:
-        radial-gradient(closest-side, transparent 73%, #0000 0),
-        conic-gradient(from 90deg,
-          #ff8ab7 0 16%, #ffd07a 16% 32%, #a9f277 32% 48%, #7df2e9 48% 64%, #7fb3ff 64% 80%, #c9a1ff 80% 100%);
-      -webkit-mask: radial-gradient(closest-side, #0000 68%, #000 70%);
-              mask: radial-gradient(closest-side, #0000 68%, #000 70%);
-      opacity:.85; filter:saturate(110%);
-    }
-    .cloud{position:absolute; background:linear-gradient(180deg,#fff,#f1f4ff); border-radius:999px; filter:drop-shadow(0 8px 20px rgba(0,0,0,.1));}
+    /* Decorative clouds */
+    .cloud{position:absolute; background:linear-gradient(180deg,#fff,#f1f4ff); border-radius:999px; filter:drop-shadow(0 8px 20px rgba(0,0,0,.1)); opacity:.75}
     .cloud:before,.cloud:after{content:""; position:absolute; background:inherit; border-radius:inherit}
     .cloud.small{width:120px;height:60px}
     .cloud.small:before{width:70px;height:70px; left:-20px; top:-18px}
@@ -36,168 +25,262 @@
     .cloud.big:before{width:120px;height:120px; left:-30px; top:-28px}
     .cloud.big:after{width:140px;height:140px; right:-32px; top:-38px}
 
-    .hills{position:absolute; inset:45vh 0 40px 0;}
-    .hill{position:absolute; bottom:0; width:80vmax; height:30vmax; border-radius:50%; filter:drop-shadow(0 -8px 40px rgba(0,0,0,.12))}
-    .hill.one{left:-20vmax; background:radial-gradient(120% 120% at 60% 30%, #9bf58f, var(--hill1))}
-    .hill.two{right:-25vmax; background:radial-gradient(120% 120% at 40% 35%, #9df7a2, var(--hill2))}
-    .hill.three{left:10vmax; width:60vmax; height:22vmax; background:radial-gradient(120% 120% at 50% 30%, #b7ffb4, var(--hill3))}
+    /* Toolbar */
+    .toolbar{position:fixed; left:12px; top:12px; display:flex; gap:8px; z-index:100}
+    .btn{background:linear-gradient(180deg,#4cc66e,#2d9f53); color:#fff; border:1px solid #1f7c3f; padding:8px 12px; border-radius:8px; font-weight:800; cursor:pointer}
+    .btn.secondary{background:linear-gradient(180deg,#7aa0ff,#5876e8); border-color:#3c55b8}
+    .status{background:#ffffffc9; backdrop-filter:blur(6px); border:1px solid #dfe4ff; padding:8px 12px; border-radius:8px; font-weight:700}
 
-    /* ===== DESKTOP ICONS ===== */
-    .desktop{position:fixed; inset:0; padding:14px; z-index:2; display:grid; grid-template-columns:repeat(auto-fill, 92px); gap:16px; align-content:start}
-    .icon{width:92px; text-align:center; user-select:none; cursor:pointer}
-    .icon .glyph{width:64px;height:64px; margin:0 auto 6px; border-radius:16px; background:linear-gradient(145deg,#fff,#eef2ff); border:1px solid #dfe4ff; display:grid; place-items:center; box-shadow:0 6px 18px rgba(0,0,0,.10)}
-    .icon .glyph svg{width:38px;height:38px}
-    .icon span{display:block; font-size:12px; color:#123; text-shadow:0 1px 0 #fff}
+    /* Dropzone board */
+    .board{position:fixed; inset:80px 12px 12px 12px; border-radius:16px; background:linear-gradient(180deg,#f7fbff,#eef4ff); border:1px solid #dfe4ff; box-shadow:var(--shadow)}
+    .grid{position:absolute; inset:12px; border-radius:12px; border:1px dashed #c6cffc}
 
-    /* ===== WINDOWS ===== */
-    .window{position:absolute; min-width:300px; width:min(560px, 92vw); max-width:96vw; background:var(--window); border:1px solid #cad3ff; border-radius:10px; overflow:hidden; box-shadow:var(--shadow); z-index:5}
-    .titlebar{display:flex; align-items:center; gap:8px; padding:8px 10px; color:#fff; background:linear-gradient(180deg, var(--chrome), var(--chrome-dark)); cursor:move}
-    .titlebar .btn{margin-left:auto; display:flex; gap:6px}
-    .tb{width:26px;height:22px; border-radius:4px; background:rgba(255,255,255,.15); display:grid; place-items:center; border:1px solid rgba(255,255,255,.25); font-weight:900}
-    .tb:hover{background:rgba(255,255,255,.25)}
-    .menubar{display:flex; gap:14px; padding:6px 10px; font-size:13px; color:#2a2a4a; border-bottom:1px solid #e3e7ff; background:#f7f9ff}
-    .content{padding:12px; font-size:14px; color:#334}
-    .paint{display:grid; grid-template-columns:56px 1fr; gap:10px}
-    .tools{display:grid; grid-template-columns:repeat(2,26px); gap:6px; background:#eef2ff; border:1px solid #dfe4ff; border-radius:6px; padding:8px}
-    .tool{width:26px;height:26px; border-radius:6px; background:#fff; border:1px solid #d2d8ff; display:grid; place-items:center}
-    .canvas{background:linear-gradient(180deg,#dff6ff,#f9feff); border:1px solid #cfe8ff; border-radius:8px; box-shadow:inset 0 0 0 2px #fff; min-height:220px}
+    /* Target slots (invisible silhouettes) */
+    .slot{position:absolute; width:220px; height:140px; border-radius:12px; border:2px dashed #b7c4ff; background:repeating-linear-gradient(45deg,#f7f9ff,#f7f9ff 8px,#f1f4ff 8px,#f1f4ff 16px); opacity:.7}
+    .slot.correct{border-color:#35c26b; background:rgba(53,194,107,.12)}
 
-    /* ===== MEDIA PLAYER MOCK ===== */
-    .player{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px; border:1px solid #dfe4ff; border-radius:12px; background:linear-gradient(180deg,#fefeff,#eef4ff)}
-    .dial{width:56px;height:56px; border-radius:50%; background:conic-gradient(var(--accent), var(--accent2), var(--accent3), var(--accent)); display:grid; place-items:center; filter:saturate(120%)}
-    .dial div{width:40px;height:40px; border-radius:50%; background:#fff}
+    /* Draggable windows (pieces) */
+    .win{position:absolute; width:220px; min-height:140px; background:var(--window); border:1px solid #cad3ff; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); touch-action:none}
+    .titlebar{display:flex; align-items:center; gap:8px; padding:8px 10px; color:#fff; background:linear-gradient(180deg, var(--chrome), var(--chrome-dark)); cursor:grab; user-select:none}
+    .titlebar:active{cursor:grabbing}
+    .titlebar strong{font-size:14px}
+    .titlebar .btns{margin-left:auto; display:flex; gap:6px}
+    .tb{width:26px;height:22px; border-radius:4px; background:rgba(255,255,255,.18); display:grid; place-items:center; border:1px solid rgba(255,255,255,.3); font-weight:900}
+    .content{padding:12px; font-size:13px; color:#334}
 
-    /* ===== TASKBAR ===== */
-    .taskbar{position:fixed; left:0; right:0; bottom:0; height:40px; background:linear-gradient(180deg,var(--taskbar), var(--taskbar-dark)); z-index:6; display:flex; align-items:center; gap:8px; padding:0 10px}
-    .start{background:linear-gradient(180deg,#4cc66e,#2d9f53); color:#fff; border:1px solid #1f7c3f; padding:6px 10px; border-radius:6px; font-weight:800}
-    .task{background:#f1f5ff; color:#123; border:1px solid #cfd7ff; height:28px; padding:0 10px; border-radius:6px; display:flex; align-items:center}
+    /* Success overlay */
+    .done{position:fixed; inset:0; display:none; place-items:center; z-index:300;}
+    .done.show{display:grid}
+    .card{background:#fff; border:1px solid #dfe4ff; border-radius:16px; padding:24px 28px; box-shadow:var(--shadow); text-align:center}
+    .card h2{margin:0 0 8px}
+    .card p{margin:0 0 16px; color:var(--muted)}
 
-    /* ===== Responsive helpers ===== */
-    @media (max-width: 680px){ .menubar{display:none} .paint{grid-template-columns:1fr} .tools{grid-template-columns:repeat(6,26px)} }
+    /* Confetti */
+    .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:250}
+    .confetti i{position:absolute; width:8px; height:14px; background:linear-gradient(180deg,#ffd07a,#ff86d8,#7fe0ff); transform:translateY(-20vh) rotate(0deg); animation:fall 2.2s linear forwards; border-radius:2px}
+    @keyframes fall{to{transform:translateY(120vh) rotate(380deg)}}
+
+    /* Mobile hint */
+    @media (max-width: 768px){
+      .slot, .win{width:180px; height:120px}
+      .board{inset:96px 8px 8px 8px}
+    }
   </style>
 </head>
 <body>
-  <div class="scene">
-    <div class="rainbow"></div>
-    <div class="cloud small" style="top:10vh; left:6vw"></div>
-    <div class="cloud big" style="top:16vh; left:26vw"></div>
-    <div class="cloud small" style="top:12vh; right:8vw"></div>
-    <div class="cloud big" style="top:24vh; right:20vw"></div>
-    <div class="hills">
-      <div class="hill one"></div>
-      <div class="hill two"></div>
-      <div class="hill three"></div>
-    </div>
+  <!-- clouds -->
+  <div class="cloud small" style="top:8vh; left:6vw"></div>
+  <div class="cloud big" style="top:14vh; left:24vw"></div>
+  <div class="cloud small" style="top:10vh; right:8vw"></div>
+  <div class="cloud big" style="top:22vh; right:18vw"></div>
+
+  <!-- Controls -->
+  <div class="toolbar">
+    <button class="btn" id="shuffle">Shuffle</button>
+    <button class="btn secondary" id="reset">Reset</button>
+    <div class="status" id="status">0 / 6 맞춤</div>
   </div>
 
-  <!-- Desktop icons -->
-  <div class="desktop" aria-label="icons">
-    <div class="icon" data-open="#w-paint">
-      <div class="glyph">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7c91ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 13l4-4 5 5 3-3 6 6"/></svg>
-      </div>
-      <span>Paint</span>
-    </div>
-    <div class="icon" data-open="#w-gallery">
-      <div class="glyph">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#ff86d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="8.5" cy="8.5" r="3.5"/><path d="M21 21l-6-6"/></svg>
-      </div>
-      <span>Gallery</span>
-    </div>
-    <div class="icon" data-open="#w-player">
-      <div class="glyph">
-        <svg viewBox="0 0 24 24" fill="#7fe0ff"><path d="M8 5v14l11-7-11-7z"/></svg>
-      </div>
-      <span>Player</span>
-    </div>
+  <!-- Board & Slots -->
+  <div class="board" id="board" aria-label="puzzle-board">
+    <div class="grid" id="grid"></div>
   </div>
 
-  <!-- WINDOWS (spawned dynamically) -->
-  <template id="tpl-win">
-    <div class="window" style="left:8vw; top:22vh">
-      <div class="titlebar" data-drag>
-        <strong>untitled - Paint</strong>
-        <div class="btn"><div class="tb" data-min>-</div><div class="tb" data-close>×</div></div>
-      </div>
-      <div class="menubar">File Edit View Image Colors Help</div>
-      <div class="content paint">
-        <div class="tools">
-          <div class="tool">✏️</div><div class="tool">🖌️</div><div class="tool">🔲</div><div class="tool">🔴</div><div class="tool">🌈</div><div class="tool">✂️</div>
-        </div>
-        <div class="canvas" style="min-height:200px"></div>
-      </div>
+  <!-- Success -->
+  <div class="done" id="done">
+    <div class="card">
+      <h2>완성! 🎉</h2>
+      <p>모든 윈도우 조각을 정확한 위치에 맞췄습니다.</p>
+      <button class="btn" id="again">다시 하기</button>
     </div>
-  </template>
-
-  <!-- TASKBAR -->
-  <div class="taskbar">
-    <button class="start">start</button>
-    <div class="task">untitled - Paint</div>
-  </div>
-  <div class="taskbar">
-    <button class="start">start</button>
-    <div class="task">untitled - Paint</div>
-    <div class="task">Viewer</div>
-    <div class="task">Player</div>
   </div>
 
   <script>
-    // Drag + window behavior helpers
-    function makeDraggable(w){
-      const bar = w.querySelector('[data-drag]');
-      let sx=0, sy=0, sl=0, st=0, drag=false;
-      const boundsY = 40; // reserve for taskbar
-      bar.addEventListener('pointerdown', e=>{drag=true; w.setPointerCapture(e.pointerId); sx=e.clientX; sy=e.clientY; sl=parseInt(w.style.left)||0; st=parseInt(w.style.top)||0; w.style.zIndex = +new Date();});
-      window.addEventListener('pointermove', e=>{ if(!drag) return; const dx=e.clientX-sx, dy=e.clientY-sy; const nx=Math.max(0, Math.min(window.innerWidth-w.offsetWidth, sl+dx)); const ny=Math.max(0, Math.min(window.innerHeight-boundsY-w.offsetHeight, st+dy)); w.style.left=nx+"px"; w.style.top=ny+"px"; });
-      window.addEventListener('pointerup', e=>{drag=false; try{w.releasePointerCapture(e.pointerId)}catch(_){} });
-      w.querySelector('[data-close]').addEventListener('click', ()=>w.remove());
-      w.querySelector('[data-min]').addEventListener('click', ()=>w.style.display='none');
+    // ----- Config -----
+    const PIECES = [
+      {id:'a', title:'Paint', text:'연필 / 브러시 / 도형'},
+      {id:'b', title:'Viewer', text:'이미지 뷰어'},
+      {id:'c', title:'Memo', text:'메모창'},
+      {id:'d', title:'Media Player', text:'재생 / 일시정지'},
+      {id:'e', title:'Smile!', text:'( ͡° ͜ʖ ͡° )'},
+      {id:'f', title:'Cool Fish', text:'🐟 파닥파닥'}
+    ];
+
+    // Target slot layout (relative to board)
+    const SLOT_LAYOUT = [
+      {id:'a', x:40,  y:20},
+      {id:'b', x:280, y:20},
+      {id:'c', x:520, y:20},
+      {id:'d', x:40,  y:190},
+      {id:'e', x:280, y:190},
+      {id:'f', x:520, y:190}
+    ];
+
+    const board = document.getElementById('board');
+    const grid = document.getElementById('grid');
+    const statusEl = document.getElementById('status');
+    const doneEl = document.getElementById('done');
+
+    const SLOTS = new Map();
+    const WINS  = new Map();
+    let solved = 0;
+
+    // Create slots
+    function createSlots(){
+      SLOT_LAYOUT.forEach(s=>{
+        const el = document.createElement('div');
+        el.className = 'slot';
+        el.dataset.id = s.id;
+        el.style.left = s.x + 'px';
+        el.style.top  = s.y + 'px';
+        grid.appendChild(el);
+        SLOTS.set(s.id, el);
+      });
     }
 
-    function spawn(n=1){
-      const tpl = document.getElementById('tpl-win');
-      const frag = document.createDocumentFragment();
-      for(let i=0;i<n;i++){
-        const w = tpl.content.firstElementChild.cloneNode(true);
-        const vw = window.innerWidth, vh = window.innerHeight;
-        const ww = Math.min(560, Math.max(320, 280 + Math.random()*220));
-        const wh = 240 + Math.random()*120;
-        w.style.width = ww + 'px';
-        w.querySelector('.canvas').style.minHeight = (wh-100) + 'px';
-        const x = Math.max(6, Math.floor(Math.random()*(vw-ww-12)));
-        const y = Math.max(6, Math.floor(Math.random()*(vh-wh-60)) + 60);
-        w.style.left = x + 'px';
-        w.style.top = y + 'px';
-        // fun random titles
-        const titles = ['Paint','Viewer','Media Player','Memo','Smile!','Cool Fish'];
-        w.querySelector('strong').textContent = (Math.random()<.5? 'untitled - ':'') + titles[Math.floor(Math.random()*titles.length)];
+    // Create windows (pieces)
+    function createWindows(){
+      PIECES.forEach((p,i)=>{
+        const w = document.createElement('div');
+        w.className = 'win';
+        w.dataset.id = p.id;
+        w.style.left = (Math.random()*(window.innerWidth-260) + 20) + 'px';
+        w.style.top  = (Math.random()*(window.innerHeight-260) + 80) + 'px';
+        w.innerHTML = `
+          <div class="titlebar" data-drag>
+            <strong>${p.title}</strong>
+            <div class="btns"><div class="tb">×</div></div>
+          </div>
+          <div class="content">${p.text}</div>
+        `;
+        document.body.appendChild(w);
         makeDraggable(w);
-        frag.appendChild(w);
+        WINS.set(p.id, w);
+      });
+    }
+
+    function updateStatus(){
+      statusEl.textContent = `${solved} / ${PIECES.length} 맞춤`;
+    }
+
+    function showConfetti(){
+      const layer = document.createElement('div');
+      layer.className = 'confetti';
+      for(let i=0;i<120;i++){
+        const b = document.createElement('i');
+        b.style.left = Math.random()*100 + 'vw';
+        b.style.animationDelay = (Math.random()*0.8)+'s';
+        b.style.opacity = (0.6 + Math.random()*0.4).toFixed(2);
+        layer.appendChild(b);
       }
-      document.body.appendChild(frag);
+      document.body.appendChild(layer);
+      setTimeout(()=>layer.remove(), 2800);
     }
 
-    // Desktop icons open windows
-    document.querySelectorAll('.icon').forEach(i=>{
-      i.addEventListener('dblclick', ()=> spawn(1));
+    function checkComplete(){
+      if(solved === PIECES.length){
+        showConfetti();
+        doneEl.classList.add('show');
+      }
+    }
+
+    // Dragging & snapping
+    function makeDraggable(win){
+      const bar = win.querySelector('[data-drag]');
+      let sx=0, sy=0, sl=0, st=0, dragging=false;
+
+      const onDown = e=>{
+        dragging = true; win.setPointerCapture(e.pointerId);
+        sx = e.clientX; sy = e.clientY; sl = parseInt(win.style.left)||0; st = parseInt(win.style.top)||0;
+        win.style.zIndex = 200 + Date.now()%1000;
+      };
+      const onMove = e=>{
+        if(!dragging) return;
+        const dx=e.clientX-sx, dy=e.clientY-sy;
+        const nx=Math.max(0, Math.min(window.innerWidth - win.offsetWidth, sl+dx));
+        const ny=Math.max(0, Math.min(window.innerHeight - win.offsetHeight, st+dy));
+        win.style.left = nx + 'px';
+        win.style.top  = ny + 'px';
+      };
+      const onUp = e=>{
+        if(!dragging) return; dragging=false; try{win.releasePointerCapture(e.pointerId)}catch(_){ }
+        trySnap(win);
+      };
+
+      bar.addEventListener('pointerdown', onDown);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+
+      // close button just shakes to hint puzzle
+      win.querySelector('.tb').addEventListener('click', ()=>{
+        win.animate([
+          {transform:'translateX(0)'},
+          {transform:'translateX(-6px)'},
+          {transform:'translateX(6px)'},
+          {transform:'translateX(0)'}
+        ], {duration:220});
+      });
+    }
+
+    function rectCenter(el){
+      const r = el.getBoundingClientRect();
+      return {x:r.left + r.width/2, y:r.top + r.height/2};
+    }
+
+    function trySnap(win){
+      const id = win.dataset.id;
+      const slot = SLOTS.get(id);
+      const wc = rectCenter(win), sc = rectCenter(slot);
+      const dist = Math.hypot(wc.x - sc.x, wc.y - sc.y);
+      const threshold = Math.min(win.offsetWidth, win.offsetHeight) * 0.45; // generous
+      if(dist < threshold){
+        // snap exactly to slot position
+        const br = board.getBoundingClientRect();
+        const sr = slot.getBoundingClientRect();
+        win.style.left = (sr.left - 0) + 'px';
+        win.style.top  = (sr.top  - 0) + 'px';
+        // lock it
+        win.style.pointerEvents = 'none';
+        slot.classList.add('correct');
+        solved += 1; updateStatus(); checkComplete();
+      }
+    }
+
+    // Shuffle = randomize pieces positions & unlock
+    function shufflePieces(){
+      solved = 0; updateStatus();
+      document.querySelectorAll('.slot').forEach(s=>s.classList.remove('correct'));
+      WINS.forEach(win=>{
+        win.style.pointerEvents='auto';
+        win.style.left = (Math.random()*(window.innerWidth-260) + 20) + 'px';
+        win.style.top  = (Math.random()*(window.innerHeight-260) + 80) + 'px';
+      });
+      doneEl.classList.remove('show');
+    }
+
+    function resetAll(){
+      // remove windows & slots and recreate
+      document.querySelectorAll('.win').forEach(w=>w.remove());
+      document.querySelectorAll('.slot').forEach(s=>s.remove());
+      SLOTS.clear(); WINS.clear(); solved=0; updateStatus();
+      createSlots(); createWindows();
+      doneEl.classList.remove('show');
+    }
+
+    // Init
+    createSlots();
+    createWindows();
+    updateStatus();
+
+    // Controls
+    document.getElementById('shuffle').addEventListener('click', shufflePieces);
+    document.getElementById('reset').addEventListener('click', resetAll);
+    document.getElementById('again').addEventListener('click', ()=>{shufflePieces();});
+
+    // Resize hint: keep slots anchored; windows stay absolute (no need to relayout)
+    window.addEventListener('resize', ()=>{
+      // no-op by design; this keeps the puzzle feel even on orientation changes
     });
-
-    // Background grid (existing)
-    const grid = document.querySelector('.grid');
-    const total = 30; // decorative blobs
-    for(let i=0;i<total;i++){
-      const b = document.createElement('div');
-      b.className = 'blob';
-      const r = (Math.random()*10-5).toFixed(2);
-      const s = (0.92 + Math.random()*0.2).toFixed(2);
-      b.style.transform = `rotate(${r}deg) scale(${s})`;
-      grid.appendChild(b);
-    }
-
-    // Spawn 30 windows initially
-    spawn(30);
   </script>
 </body>
 </html>
